@@ -1,0 +1,48 @@
+#include <stdio.h>
+#include <stdint.h>
+#include "platform.h"
+#include "xil_printf.h"
+#include "xparameters.h"
+#include "xil_io.h"
+
+#define BRAM_BASE_ADDR (0X00000000)
+#define MULT_BASE_ADDR (0X43C00000)
+#define A_REG_ADDR (MULT_BASE_ADDR + 0X00)
+#define B_REG_ADDR (MULT_BASE_ADDR + 0X04)
+#define P_REG_ADDR (MULT_BASE_ADDR + 0X08)
+
+
+int main()
+{
+    init_platform();
+    xil_printf("Jayden Silpachai Lab 4\n");
+    xil_printf("Start of BRAM Test\n");
+
+    for (uint32_t k = 0; k < 32; k++)
+    {
+    	uint32_t operand = k + 1;
+
+    	Xil_Out32(A_REG_ADDR, operand);
+    	Xil_Out32(B_REG_ADDR, operand);
+
+    	uint32_t p_val = Xil_In32(P_REG_ADDR);
+
+    	uint32_t bram_addr = BRAM_BASE_ADDR + (k*4);
+    	Xil_Out32(bram_addr, p_val);
+    }
+
+    for (uint32_t k = 0; k < 32; k++)
+    {
+    	uint32_t a_val = k + 1;
+    	uint32_t b_val = k + 1;
+    	uint32_t bram_addr = BRAM_BASE_ADDR + (k*4);
+    	uint32_t p_val = Xil_In32(bram_addr);
+
+    	xil_printf("%d * %d = %d at BRAM[%d]\r\n", a_val, b_val, p_val, k);
+    }
+
+    xil_printf("End of Multiplier Test\r\n");
+
+    cleanup_platform();
+    return 0;
+}

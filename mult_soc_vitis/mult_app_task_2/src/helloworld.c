@@ -1,0 +1,127 @@
+#include <stdio.h>
+#include "xil_printf.h"
+#include "xil_io.h"
+#include "xil_types.h"
+
+// Base addresses from Vivado Address Editor
+#define FIFO_BASEADDR       0x43C10000U
+#define MULT_BASEADDR       0x43C00000U
+
+// sc_fifo_axi Register Offsets
+#define FIFO_REV_REG        (FIFO_BASEADDR + 0x00U)
+#define FIFO_RST_REG        (FIFO_BASEADDR + 0x04U)
+#define FIFO_WR_DATA_REG    (FIFO_BASEADDR + 0x08U)
+#define FIFO_RD_REQ_REG     (FIFO_BASEADDR + 0x0CU)
+#define FIFO_RD_DATA_REG    (FIFO_BASEADDR + 0x10U)
+#define FIFO_STATUS_REG     (FIFO_BASEADDR + 0x14U)
+#define FIFO_COUNT_REG      (FIFO_BASEADDR + 0x18U)
+#define FIFO_CONFIG_REG     (FIFO_BASEADDR + 0x1CU)
+#define FIFO_THRESH_REG     (FIFO_BASEADDR + 0x20U)
+
+// STATUS_REG Bit Masks
+#define STATUS_EMPTY        (1U << 0)
+#define STATUS_FULL         (1U << 1)
+#define STATUS_A_EMPTY      (1U << 2)
+#define STATUS_A_FULL       (1U << 3)
+#define STATUS_RD_VALID     (1U << 4)
+
+//
+#define MULT_IN_A_REG       (MULT_BASEADDR + 0x00U)
+#define MULT_IN_B_REG       (MULT_BASEADDR + 0x04U)
+#define MULT_PROD_REG       (MULT_BASEADDR + 0x08U)
+
+// Helper: Push a 16-bit word into the FIFO
+int fifo_push(u16 data) {
+    if (Xil_In32(FIFO_STATUS_REG) & STATUS_FULL) {
+        xil_printf("ERROR: Attempted push while FIFO is FULL!\r\n");
+        return -1;
+    }
+    Xil_Out32(FIFO_WR_DATA_REG, (u32)data);
+    return 0;
+}
+
+// Helper: Two-step pop (RD_REQ -> poll RD_VALID -> read RD_DATA)
+int fifo_pop(u16 *data) {
+    u32 timeout = 100000U;
+    if (Xil_In32(FIFO_STATUS_REG) & STATUS_EMPTY) {
+        xil_printf("ERROR: Attempted pop while FIFO is EMPTY!\r\n");
+        return -1;
+    }
+    // Step 1: Request pop
+    Xil_Out32(FIFO_RD_REQ_REG, 1U);
+
+    // Step 2: Poll RD_VALID bit
+    while (((Xil_In32(FIFO_STATUS_REG) & STATUS_RD_VALID) == 0U) && (timeout > 0U)) {
+        timeout--;
+    }
+    if (timeout == 0U) {
+        xil_printf("ERROR: Timed out waiting for RD_VALID!\r\n");
+        return -1;
+    }
+
+    // Step 3: Read popped 16-bit word
+    *data = (u16)(Xil_In32(FIFO_RD_DATA_REG) & 0xFFFFU);
+    return 0;
+}
+
+int main(void) {
+    xil_printf("\r\n=== Starting sc_fifo_axi & Multiplier Test ===\r\n");
+
+    // 1. Check ID, Config, and Threshold Registers
+    u32 rev    = Xil_In32(FIFO_REV_REG);
+    u32 config = Xil_In32(FIFO_CONFIG_REG);
+    u32 thresh = Xil_In32(FIFO_THRESH_REG);
+    xil_printf("REV: 0x%08X | CONFIG: 0x%08X | THRESH: 0x%08X\r\n", rev, config, thresh);
+
+    // 2. Software Reset & Flag Check
+    Xil_Out32(FIFO_RST_REG, 1U);
+    u32 status = Xil_In32(FIFO_STATUS_REG);
+    u32 count  = Xil_In32(FIFO_COUNT_REG);
+    xil_printf("After Reset -> STATUS: 0x%02X (expect 0x05), COUNT: %u\r\n", status, count);
+
+    // 3. Push 32 values and verify FULL flag
+    for (u16 i = 0; i < 32; i++) {
+        fifo_push(0x1000U + i);
+    }
+    xil_printf("After 32 Pushes -> STATUS: 0x%02X (expect 0x0A), COUNT: %u\r\n",
+               Xil_In32(FIFO_STATUS_REG), Xil_In32(FIFO_COUNT_REG));
+
+    // Pop and verify all 32 values
+    int errors = 0;
+    for (u16 i = 0; i < 32; i++) {
+        u16 val = 0;
+        if (fifo_pop(&val) != 0 || val != (0x1000U + i)) {
+            xil_printf("Mismatch at index %u: expected 0x%04X, got 0x%04X\r\n",
+                       i, (0x1000U + i), val);
+            errors++;
+        }
+    }
+    xil_printf("FIFO Fill/Drain Test Errors: %d\r\n", errors);
+
+    // 4. Test FIFO feeding operands into Multiplier
+    u16 test_a[4] = { 12, 250, 1024, 65535 };
+    u16 test_b[4] = { 10, 40,  32,   2 };
+
+    for (int i = 0; i < 4; i++) {
+        fifo_push(test_a[i]);
+        fifo_push(test_b[i]);
+    }
+
+    for (int i = 0; i < 4; i++) {
+        u16 a = 0, b = 0;
+        fifo_pop(&a);
+        fifo_pop(&b);
+
+        // Send popped operands to mult_16_bit_0
+        Xil_Out32(MULT_IN_A_REG, (u32)a);
+        Xil_Out32(MULT_IN_B_REG, (u32)b);
+        u32 hw_prod = Xil_In32(MULT_PROD_REG);
+        u32 sw_prod = (u32)a * (u32)b;
+
+        xil_printf("Test %d: %u * %u -> HW: %u | SW: %u %s\r\n",
+                   i, a, b, hw_prod, sw_prod, (hw_prod == sw_prod) ? "[PASS]" : "[FAIL]");
+    }
+
+    xil_printf("=== Test Complete ===\r\n");
+    return 0;
+}

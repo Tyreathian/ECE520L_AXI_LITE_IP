@@ -15,6 +15,8 @@ Often times the IP repo folder would be placed in an odd spot, and since each ne
 ECE520L_Lab_4_AXI_LITE_IP_manual
 
 # Pictures
-![alt text](<lab 4 com terminal proof-1.png>)
-![alt text](<lab 4 task 4.png>)
-![alt text](<lab 4 task 6.png>)
+![alt text](./lab 4 com terminal proof-1.png)
+
+![alt text](./lab 4 task 4.png)
+
+![alt text](./lab 4 task 6.png)

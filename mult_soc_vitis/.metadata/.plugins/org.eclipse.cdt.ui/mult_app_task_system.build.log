@@ -1,0 +1,10 @@
+17:31:27 **** Incremental Build of configuration Debug for project mult_app_task_system ****
+make all 
+Generating bif file for the system project
+generate_system_bif.bat 53244 C:/Users/jayde/mult_soc_js/mult_soc_vitis/mult_plat_task/export/mult_plat_task/mult_plat_task.xpfm standalone_domain C:/Users/jayde/mult_soc_js/mult_soc_vitis/mult_app_task_system/Debug/system.bif
+sdcard_gen --xpfm C:/Users/jayde/mult_soc_js/mult_soc_vitis/mult_plat_task/export/mult_plat_task/mult_plat_task.xpfm --sys_config mult_plat_task --bif C:/Users/jayde/mult_soc_js/mult_soc_vitis/mult_app_task_system/Debug/system.bif --bitstream C:/Users/jayde/mult_soc_js/mult_soc_vitis/mult_app_task/_ide/bitstream/mult_bd_js_wrapper_task.bit --elf C:/Users/jayde/mult_soc_js/mult_soc_vitis/mult_app_task/Debug/mult_app_task.elf,ps7_cortexa9_0
+creating BOOT.BIN using C:/Users/jayde/mult_soc_js/mult_soc_vitis/mult_app_task/_ide/bitstream/mult_bd_js_wrapper_task.bit
+Running C:/Xilinx/Vitis/2023.1/bin/bootgen  -image C:/Users/jayde/mult_soc_js/mult_soc_vitis/mult_app_task_system/Debug/sd_card_temp/boot.bif -w -o i BOOT.BIN
+
+17:31:34 Build Finished (took 6s.762ms)
+
