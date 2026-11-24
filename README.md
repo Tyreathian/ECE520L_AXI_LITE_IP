@@ -1,22 +1,23 @@
 # Custom AXI4-Lite FIFO & Multiplier SoC
-# Overview
-The purpose of this lab is to use the IP Packaging feature within Vivado to create custom blocks for the Block Diagram to be used for a 16 bit Multiplier. The FIFO to be used in this lab was based on a prior project from earlier.
 
-# Testing Strategy
-For each designated task, after creating each project file and generating a bitstream for each, it is exported into Vitis IDE and a section of code can be written in order to test each custom task.
+## Overview
+The purpose of this lab is to use the IP Packaging feature within Vivado to create custom blocks for the Block Diagram to be used for a 16-bit multiplier. The FIFO used in this lab was based on an earlier project.
 
-# Verification
-For each section of code written, the project would be built and then run and the output would be viewed using the COM port while connected to the Zybo Z-7 board. The output for each test was screenshotted and verified by the instructor.
+## Testing Strategy
+For each designated task, after creating each project file and generating a bitstream, the hardware design is exported to the Vitis IDE, where test code is written to verify each custom task.
 
-# Issues 
-Often times the IP repo folder would be placed in an odd spot, and since each new project would create a new ip_repo folder, caution is required to ensure the correct folder was selected for the IP Repository.
+## Verification
+For each section of test code, the project is built and run on the Zybo Z7 board, with output monitored over the COM port. Screenshots of each test output were captured and verified by the instructor.
 
-# References
-ECE520L_Lab_4_AXI_LITE_IP_manual
+## Issues
+The `ip_repo` folder was occasionally placed in an unexpected directory, and each new project created its own `ip_repo` folder. Care was needed to select the correct IP repository path in Vivado.
 
-# Pictures
-![alt text](./lab 4 com terminal proof-1.png)
+## References
+* `ECE520L_Lab_4_AXI_LITE_IP_manual`
 
-![alt text](./lab 4 task 4.png)
+## Pictures
+![COM terminal output proof](./lab%204%20com%20terminal%20proof-1.png)
 
-![alt text](./lab 4 task 6.png)
+![Lab 4 Task 4 output](./lab%204%20task%204.png)
+
+![Lab 4 Task 6 output](./lab%204%20task%206.png)
